@@ -2,14 +2,17 @@ import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions
 import datetime
+from youtube_search import YoutubeSearch
 
 client = discord.Client()
-token = 'Can't show token :P'
+token = 'NzAzMzIwNzg4NzQ0NTM2MDg1.XqXdsg.28S4SmTalY3mY1qkl5Kso_cdDdQ'
 client = commands.Bot(command_prefix='.')
+client.remove_command('help')
 
 
 @client.event
 async def on_ready():
+    await client.change_presence(status=discord.Status.online)
     change_status.start()
     print('We have logged in as {0.user}'.format(client))
 
@@ -17,44 +20,62 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     channel = client.get_channel(id=700752240163422280)
-    embed = discord.Embed(title=f"Welcome! {member.name}", colour=discord.Colour.purple(),
-                          description=f"Welcome to **ENDERCRAFT.XYZ** {member.mention}\n"
-                                      f"You are member #{len(list(member.guild.members))}\n"
-                                      f"***We play FTB Revelation More info at*** {channel.mention}")
-
-    embed.set_thumbnail(url=f"{member.avatar_url}")
-    embed.set_author(name=f"{member.name}", icon_url=f"{member.avatar_url}")
-    embed.set_footer(text=f"{member.guild}", icon_url=f"{member.guild.icon_url}")
+    channel2 = client.get_channel(id=704426263758110850)
+    channel3 = client.get_channel(id=699630576461938728)
+    embed = discord.Embed(colour=discord.Colour.purple(),
+                          description=
+                          f"**ENDERCRAFT** is a Modded Minecraft 1.12.2 server using\n"
+                          f"FTB Revelations with some added mods.\n"
+                          f"{channel.mention}\n"
+                          f"{channel2.mention}\n"
+                          f"{channel3.mention}")
+    embed.set_thumbnail(
+        url=f"https://media.discordapp.net/attachments/694185339446624287/705154537102770216/logox.png?width=676&height=676")
+    embed.set_author(name=f"Welcome {member.name}!", icon_url=f"{member.avatar_url}")
+    embed.set_footer(text=f"Member #{len(list(member.guild.members))}", icon_url=f"{member.guild.icon_url}")
     embed.timestamp = datetime.datetime.utcnow()
+    role = discord.utils.get(member.guild.roles, id=706954860167168020)
 
+    await member.add_roles(role)
     channel = client.get_channel(id=694186364262154371)
     await channel.send(embed=embed)
 
 
 @client.command(pass_context=True)
 @has_permissions(manage_messages=True)
-async def mute(ctx, member: discord.Member, amount=1, reason=None):
+async def mute(ctx, member: discord.Member, reason=None, amount=1):
     await ctx.channel.purge(limit=amount)
     channel_log_id = 704057507768696833
     log_channel = client.get_channel(channel_log_id)
     guild = ctx.guild
+    enderer = discord.utils.get(ctx.guild.roles, name="Enderer")
+    enderer_plus = discord.utils.get(ctx.guild.roles, name="Enderer+")
     for role in guild.roles:
         if role.name == "Muted":
             await member.add_roles(role)
-            embed = discord.Embed(title="**User Muted**", description=f'{member.mention} has been muted!\n'
-                                                                      f'**Admin:** {ctx.author.mention}\n'
-                                                                      f'**Reason**: {reason}',
+            await member.remove_roles(enderer)
+            await member.remove_roles(enderer_plus)
+
+            embed = discord.Embed(title=":mute:**User Muted**:mute:", description=f'{member.mention} has been muted!\n'
+                                                                                  f'**Admin:** {ctx.author.mention}\n'
+                                                                                  f'**Reason**: {reason}',
                                   color=discord.Colour.purple())
             embed.set_footer(text="ENDERCRAFT.XYZ ADMIN BOT")
+            embed2 = discord.Embed(title=f"**User Muted, Be Quiet!**", description=f'{member.mention} has been muted!\n'
+                                                                                   f'**Admin:** {ctx.author.mention}\n'
+                                                                                   f'**Reason**: {reason}',
+                                   color=discord.Colour.purple())
+            embed2.set_footer(text="ENDERCRAFT.XYZ ADMIN BOT")
             await log_channel.send(embed=embed)
+            await ctx.send(embed=embed2)
             return
 
             overwrite = discord.PermissionOverwrite(send_messages=False)
-            newRole = await guild.create_role(name="Muted")
+            newrole = await guild.create_role(name="Muted")
 
             for channel in guild.text_channels:
-                await channel.set_permissions(newRole, overwrite=overwrite)
-            await member.add_roles(newRole)
+                await channel.set_permissions(newrole, overwrite=overwrite)
+            await member.add_roles(newrole)
             await log_channel.send(embed=embed)
 
 
@@ -65,20 +86,30 @@ async def unmute(ctx, member: discord.Member, amount=1):
     channel_log_id = 704057507768696833
     log_channel = client.get_channel(channel_log_id)
     guild = ctx.guild
+    enderer = discord.utils.get(ctx.guild.roles, name="Enderer")
+    enderer_plus = discord.utils.get(ctx.guild.roles, name="Enderer+")
 
     for role in guild.roles:
         if role.name == "Muted":
-            embed = discord.Embed(title="**User Un-Muted**", description=f'{member.mention} has been un-muted!\n'
-                                                                         f'**Admin:** {ctx.author.mention}\n',
+            embed = discord.Embed(title=":loud_sound:**User Un-Muted**:loud_sound:",
+                                  description=f'{member.mention} has been un-muted!\n'
+                                              f'**Admin:** {ctx.author.mention}\n',
                                   color=discord.Colour.purple())
             embed.set_footer(text="ENDERCRAFT.XYZ ADMIN BOT")
+            embed2 = discord.Embed(title=f"**User Un-Muted, You Can Speak**",
+                                   description=f'{member.mention} has been un-muted!\n'
+                                               f'**Admin:** {ctx.author.mention}\n',
+                                   color=discord.Colour.purple())
+            embed2.set_footer(text="ENDERCRAFT.XYZ ADMIN BOT")
             await member.remove_roles(role)
+            await member.add_roles(enderer_plus)
+            await member.add_roles(enderer)
+            await ctx.send(embed=embed2)
             await log_channel.send(embed=embed)
             return
 
 
-@client.command(pass_context=True)
-@has_permissions(manage_messages=True)
+@client.command()
 async def ping(ctx):
     await ctx.send(f'Ping is {round(client.latency * 1000)}ms')
 
@@ -86,16 +117,17 @@ async def ping(ctx):
 @client.command(pass_context=True)
 @has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason=None, amount=1):
-    embed = discord.Embed(title="**User Banned**", description=f'{member.mention} has been banned!\n'
-                                                               f'**Admin:** {ctx.author.mention}\n'
-                                                               f'**Reason:** {reason}', color=discord.Colour.purple())
+    embed = discord.Embed(title=":lock:**User Banned**:lock:", description=f'{member.mention} has been banned!\n'
+                                                                           f'**Admin:** {ctx.author.mention}\n'
+                                                                           f'**Reason:** {reason}',
+                          color=discord.Colour.purple())
     embed.set_footer(
         text="If member being banned is not typed in reason, ask the admin who kicked the member, who the member was")
     channel_log_id = 704057507768696833
     log_channel = client.get_channel(channel_log_id)
     await ctx.channel.purge(limit=amount)
     await member.ban(reason=reason)
-    await ctx.send(f'{member.mention} has been banned!')
+    await ctx.send(embed=embed)
     await log_channel.send(embed=embed)
 
 
@@ -114,11 +146,13 @@ async def unban(ctx, *, member, amount=1, reason=None):
 
         if (user.name, user.discriminator) == (member_name, member_discriminator):
             await ctx.guild.unban(user)
-            embed = discord.Embed(title="**User Unbanned**", description=f'{user.mention} has been unbanned!\n'
-                                                                         f'**Admin:** {ctx.author.mention}\n'
-                                                                         f'**User:** {reason}',
+            embed = discord.Embed(title=":unlock:**User Unbanned**:unlock:",
+                                  description=f'{user.mention} has been unbanned!\n'
+                                              f'**Admin:** {ctx.author.mention}\n'
+                                              f'**User:** {reason}',
                                   color=discord.Colour.purple())
             embed.set_footer(text="Please make sure full username and tag are used in the user tab!")
+            await ctx.send(embed=embed)
             await log_channel.send(embed=embed)
             return
 
@@ -127,26 +161,30 @@ async def unban(ctx, *, member, amount=1, reason=None):
 @has_permissions(kick_members=True)
 async def kick(ctx, member: discord.Member, *, reason=None, amount=1):
     await ctx.channel.purge(limit=amount)
-    embed = discord.Embed(title="**User Kicked**", description=f'{member.mention} has been kicked!\n'
-                                                               f'**Admin:** {ctx.author.mention}\n'
-                                                               f'**Reason:** {reason}', color=discord.Colour.purple())
+    embed = discord.Embed(title=":door: **User Kicked** :door:", description=f'{member.mention} has been kicked!\n'
+                                                                             f'**Admin:** {ctx.author.mention}\n'
+                                                                             f'**Reason:** {reason}',
+                          color=discord.Colour.purple())
     embed.set_footer(
         text="If member being kicked is not typed in reason ask the admin who kicked the user, who the member was")
     channel_log_id = 704057507768696833
     log_channel = client.get_channel(channel_log_id)
     await member.kick(reason=reason)
+    await ctx.send(embed=embed)
     await log_channel.send(embed=embed)
 
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, aliases=["clear"])
 @has_permissions(manage_messages=True)
 async def clearchat(ctx, amount=5):
     amount = amount + 1
     channel_log_id = 704057507768696833
     log_channel = client.get_channel(channel_log_id)
-    await ctx.channel.purge(limit=amount)
-    embed = discord.Embed(title="**Cleared Chat**", description=f'**Admin:** {ctx.author.mention}\n'
-                                                                f'Has cleared chat in {ctx.channel.mention}',
+    deleted = await ctx.channel.purge(limit=amount)
+    embed = discord.Embed(title=":no_entry_sign:**Cleared Chat**:no_entry_sign:",
+                          description=f'**Admin:** {ctx.author.mention}\n'
+                                      f'**Has cleared chat in** {ctx.channel.mention}\n'
+                                      f'**Lines cleared:** {len(deleted)}',
                           color=discord.Colour.purple())
     embed.set_footer(
         text="ENDERCRAFT.XYZ ADMIN BOT")
@@ -156,24 +194,168 @@ async def clearchat(ctx, amount=5):
 @client.command(aliases=['commands', 'info'], pass_context=True)
 @has_permissions(administrator=True)
 @commands.cooldown(1, 30, commands.BucketType.user)
-async def eb_help(ctx):
+async def ehelp(ctx):
     embed = discord.Embed(
-        title='Command Help and Info:',
+        title='**Command Help and Info:**',
         description='Here is a list of commands for the Endercraft Admins:',
         colour=discord.Colour.purple()
     )
-    embed.set_footer(text='ADMIN-BOT was created by Endercraft admins for use on the ENDERCRAFT.XYZ discord server')
+    embed.set_footer(
+        icon_url="https://cdn.discordapp.com/attachments/391541827360129025/703697895026589736/enderman-logo.png",
+        text='ADMIN-BOT was created by Endercraft admins for use on the ENDERCRAFT.XYZ discord server')
 
     embed.set_thumbnail(
         url='https://cdn.discordapp.com/attachments/701451255423303712/701915612078800966/enderman-logo.png')
-    embed.set_author(name='Creator: @Benxii ',
-                     icon_url='https://cdn.discordapp.com/attachments/391541827360129025/703327699799638076/125px-Leo_-_Mojang_avatar.png')
+    embed.set_author(name='Creator: @CoderBen ',
+                     icon_url='https://cdn.discordapp.com/attachments/694185339446624287/706965240159404032/server-icon-1525053793.jpg')
     embed.add_field(name='.clearchat<No. of lines>', value='Allows admin to clear chat. Usage .', inline=False)
     embed.add_field(name='.kick <@playername>', value='Gives admin power to kick player from discord server.',
                     inline=False)
     embed.add_field(name='.ban <@playername>', value='Allows admin to ban player from server.!', inline=True)
     embed.add_field(name='.unban <@playername>', value='Allows admin to unban player from server.', inline=True)
     embed.add_field(name='.mute <@playername>', value='Allows admin to mute player.', inline=True)
+    embed.add_field(name='.unmute <@playername>', value='Unmutes a player', inline=True)
+    embed.add_field(name='.roles', value='Shows list of server roles', inline=False)
+    embed.add_field(name='.info', value='Pulls up this command', inline=False)
+    embed.add_field(name='.thread', value='Gives link to thread from our website', inline=False)
+    
+    await ctx.send(embed=embed)
+
+
+@client.command()
+async def whitelist(ctx):
+    embed = discord.Embed(
+        title="**Get Your Account Whitelisted Here!**",
+        description=f'http://endercraft.xyz/whitelist',
+
+        color=discord.Colour.purple()
+    )
+    embed.set_footer(
+        icon_url="https://cdn.discordapp.com/attachments/391541827360129025/703697895026589736/enderman-logo.png",
+        text="ENDERCRAFT.XYZ | ADMIN BOT")
+    embed.set_thumbnail(url='https://images-ext-1.discordapp.net/external/SL6_IonDD2F4_8LmPR7uqg5cyikKN4nUVFy6pje7WEQ/%3Fwidth%3D676%26height%3D676/https/media.discordapp.net/attachments/694185339446624287/705154537102770216/logox.png')
+
+    await ctx.send(embed=embed)
+
+
+@client.command()
+async def register(ctx):
+    embed = discord.Embed(
+        title="**Register on our website!**",
+        description='http://endercraft.xyz/register',
+        color=discord.Colour.purple()
+    )
+    embed.set_footer(
+        icon_url="https://cdn.discordapp.com/attachments/391541827360129025/703697895026589736/enderman-logo.png",
+        text="ENDERCRAFT.XYZ | ADMIN BOT")
+    embed.set_thumbnail(url='https://images-ext-1.discordapp.net/external/SL6_IonDD2F4_8LmPR7uqg5cyikKN4nUVFy6pje7WEQ/%3Fwidth%3D676%26height%3D676/https/media.discordapp.net/attachments/694185339446624287/705154537102770216/logox.png')
+    await ctx.send(embed=embed)
+
+
+@client.command()
+async def help(ctx):
+    embed = discord.Embed(
+        title='**Command Help and Info For Members**:',
+        description='**Commands:**',
+        colour=discord.Colour.purple()
+    )
+    embed.set_footer(
+        icon_url="https://cdn.discordapp.com/attachments/391541827360129025/703697895026589736/enderman-logo.png",
+        text='ENDERCRAFT.XYZ | ADMIN BOT')
+
+    embed.set_thumbnail(
+        url='https://images-ext-1.discordapp.net/external/SL6_IonDD2F4_8LmPR7uqg5cyikKN4nUVFy6pje7WEQ/%3Fwidth%3D676%26height%3D676/https/media.discordapp.net/attachments/694185339446624287/705154537102770216/logox.png')
+    embed.set_author(name='Ender-Admin',
+                     icon_url='https://cdn.discordapp.com/attachments/694185339446624287/706965240159404032/server-icon-1525053793.jpg')
+    embed.add_field(name='.whitelist', value='Gives user link to be whitelisted', inline=False)
+    embed.add_field(name='.register', value='Gives website registration link', inline=False)
+    embed.add_field(name=".ping", value='Gives client ping', inline=False)
+    embed.add_field(name=".help", value='Shows this message!', inline=False)
+    embed.add_field(name='.ip', value='Shows the server ip address', inline=False)
+    embed.add_field(name='.site',value='Gives link to our website', inline=False)
+    embed.add_field(name='search', value='Sends a DM to user from Youtube of what they searched, Usage : .search "Search" ', inline=False)
+    embed.add_field(name='.staff', value='Gives a list of the server staff and their roles')
+    embed.add_field(name='.user', value='Usage: .user (username) , shows namemc website profile of searched user.')
+
+    await ctx.send(embed=embed)
+
+
+@client.command()
+@has_permissions(administrator=True)
+async def thread(ctx, reason=None):
+    await ctx.send(f'http://endercraft.xyz/forum/index.php?thread/{reason}')
+
+
+@client.command()
+async def ip(ctx):
+    await ctx.send('**IP**= 136.243.10.47')
+
+
+@client.command()
+async def site(ctx):
+    await ctx.send('http://endercraft.xyz/')
+
+
+@client.command()
+@has_permissions(administrator=True)
+async def roles(ctx):
+    enderer = discord.utils.get(ctx.guild.roles, id=694185529952043108)
+    enderer_plus = discord.utils.get(ctx.guild.roles, id=694310153268363324)
+    muted = discord.utils.get(ctx.guild.roles, id=704059234463121468)
+    moderator = discord.utils.get(ctx.guild.roles, id=694183689327738931)
+    admin = discord.utils.get(ctx.guild.roles, id=694183690196221962)
+    server_team = discord.utils.get(ctx.guild.roles, id=704420831710675025)
+    discord_team = discord.utils.get(ctx.guild.roles, id=704420854745923706)
+    bots = discord.utils.get(ctx.guild.roles, id=694982915167092756)
+    channel = client.get_channel(id=702534851483533332)
+
+    embed = discord.Embed(color=discord.Colour.purple(),
+                          description=f'{enderer.mention} - Rank can be obtained by getting whitelisted\n'
+                                      f'{enderer_plus.mention} - Boost the server 2 times to receive. {channel.mention}\n'
+                                      f'{muted.mention} - You can not speak anymore.\n'
+                                      f'{moderator.mention} - Moderator/Support\n '
+                                      f'{admin.mention} - Administrator/Support\n'
+                                      f'\n'
+                                      f'{server_team.mention} - Server Administrator/Support.\n'
+                                      f'{discord_team.mention} - Discord Bot Administrator/Support.\n'
+                                      f'{bots.mention} - Our bots in the discord.\n',
+                          title='**Roles Information**'
+                          )
+    embed.set_footer(text='ENDER-ADMIN | ENDERCRAFT.XYZ')
+    embed.set_thumbnail(url='https://images-ext-1.discordapp.net/external/SL6_IonDD2F4_8LmPR7uqg5cyikKN4nUVFy6pje7WEQ/%3Fwidth%3D676%26height%3D676/https/media.discordapp.net/attachments/694185339446624287/705154537102770216/logox.png')
+    await ctx.send(embed=embed)
+
+
+@client.command()
+async def search(ctx, reason=None, amount=1):
+    await ctx.channel.purge(limit=amount)
+    results = YoutubeSearch(f'{reason}', max_results=1).to_dict()
+    for v in results:
+        print('https://www.youtube.com' + v['link'])
+        await ctx.author.send('https://www.youtube.com' + v['link'])
+
+
+@client.command()
+@commands.cooldown(1, 10, commands.BucketType.user)
+async def user(ctx, reason=None):
+    await ctx.send(f'https://namemc.com/profile/{reason}')
+
+
+@client.command()
+async def staff(ctx):
+    decaf = discord.utils.get(ctx.guild.members, id=212934030922874881)
+    ben = discord.utils.get(ctx.guild.members, id=383746832322396160)
+    administrator = discord.utils.get(ctx.guild.roles, id=694183690196221962)
+    discord_team = discord.utils.get(ctx.guild.roles, id=704420854745923706)
+    server_team = discord.utils.get(ctx.guild.roles, id=704420831710675025)
+    moderator = discord.utils.get(ctx.guild.roles, id=694183689327738931)
+    indo = discord.utils.get(ctx.guild.members, id=212936928180305922)
+
+    embed = discord.Embed(title='**Our Staff Team**', color=discord.Colour.purple(), description=f'{decaf.mention}  |  {administrator.mention}  |  {server_team.mention}\n'
+                                                                                                 f'{ben.mention}  |  {administrator.mention}  |  {discord_team.mention}\n'
+                                                                                                 f'{indo.mention}  |  {moderator.mention}')
+    embed.set_footer(text='ENDERCRAFT.XYZ | ENDER-ADMIN')
+    embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/706469332401782815/706961865544302632/logox.png')
     await ctx.send(embed=embed)
 
 
@@ -183,4 +365,6 @@ async def change_status():
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.playing,
                                                            name=f'ENDERCRAFT.XYZ with {len(set(client.get_all_members()))} others'))
 
+
 client.run(token)
+
